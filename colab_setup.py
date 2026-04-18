@@ -5,7 +5,9 @@
 Выполняет:
   1. Проверку, что мы действительно в Colab
   2. Диагностику GPU
-  3. Монтирование Google Drive
+  3. Проверку, что Google Drive уже смонтирован
+     (сам `drive.mount()` должен быть вызван в ячейке ноутбука — он требует
+     IPython-ядро и не работает из subprocess-Python)
   4. Установку зависимостей из requirements.txt
   5. Импорт-тест ключевых пакетов
   6. Создание каталога outputs на Google Drive
@@ -68,20 +70,23 @@ def check_gpu() -> None:
     print("⚠️  GPU не найден. В Colab: Runtime → Change runtime type → GPU.")
 
 
-def mount_drive() -> None:
-    """Монтирует Google Drive в /content/drive."""
-    _step("Step 3/6 — монтирование Google Drive")
-    try:
-        from google.colab import drive  # type: ignore
-        drive.mount("/content/drive", force_remount=False)
-        if Path("/content/drive/MyDrive").exists():
-            print("✅ Google Drive подключён: /content/drive/MyDrive")
-        else:
-            print("❌ MyDrive не найден после mount — проверь авторизацию")
-            sys.exit(1)
-    except Exception as e:  # noqa: BLE001
-        print(f"❌ Не удалось подключить Drive: {e}")
-        sys.exit(1)
+def ensure_drive_mounted() -> None:
+    """Проверяет, что Google Drive смонтирован в /content/drive.
+
+    Сам ``drive.mount()`` здесь не вызывается: модуль ``google.colab.drive``
+    требует работающее IPython-ядро ноутбука, а ``!python colab_setup.py``
+    запускается как отдельный subprocess без IPython. Поэтому монтирование
+    должно выполняться в ячейке ноутбука **до** запуска этого скрипта.
+    """
+    _step("Step 3/6 — проверка Google Drive")
+    if Path("/content/drive/MyDrive").exists():
+        print("✅ Google Drive подключён: /content/drive/MyDrive")
+        return
+    print("❌ Google Drive не смонтирован.")
+    print("   Выполни в ячейке ноутбука до запуска colab_setup.py:")
+    print("     from google.colab import drive")
+    print("     drive.mount('/content/drive')")
+    sys.exit(1)
 
 
 def install_requirements() -> None:
@@ -129,7 +134,7 @@ def ensure_outputs_dir() -> None:
 def main() -> None:
     ensure_colab()
     check_gpu()
-    mount_drive()
+    ensure_drive_mounted()
     install_requirements()
     verify_imports()
     ensure_outputs_dir()
