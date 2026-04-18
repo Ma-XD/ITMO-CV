@@ -1,0 +1,25 @@
+# Data & outputs
+data/
+outputs/
+checkpoints/
+
+# Model weights
+*.pth
+*.pt
+*.onnx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# macOS
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
