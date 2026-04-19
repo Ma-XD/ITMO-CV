@@ -1,16 +1,3 @@
-"""
-Автоматическое определение окружения и настройка путей.
-Используется всеми подпроектами в репо.
-
-Поддерживает два сценария:
-  • Google Colab (есть `/content`, GPU через CUDA, Google Drive для сохранений)
-  • Локальная разработка на macOS (CPU / Apple MPS, сохранения в репо)
-
-Модуль спроектирован так, чтобы его можно было импортировать до установки
-зависимостей (torch, torchvision) — в этом случае device-функции выдают
-предупреждение вместо ошибки.
-"""
-
 from __future__ import annotations
 
 import os
@@ -27,22 +14,13 @@ except ImportError:
     _TORCH_AVAILABLE = False
 
 
-# --------------------------------------------------------------------------- #
-# Определение окружения
-# --------------------------------------------------------------------------- #
-
 def _detect_colab() -> bool:
-    """Вернёт True, если код выполняется в Google Colab."""
-    # В Colab всегда смонтирован каталог `/content`, а также обычно есть
-    # модуль google.colab. Проверяем оба признака для надёжности.
     if not Path("/content").exists():
         return False
     try:
         import google.colab  # type: ignore # noqa: F401
         return True
     except ImportError:
-        # На некоторых машинах `/content` может существовать случайно —
-        # дополнительно сверяемся с переменной окружения Colab.
         return "COLAB_GPU" in os.environ or "COLAB_RELEASE_TAG" in os.environ
 
 
@@ -50,22 +28,15 @@ is_colab: bool = _detect_colab()
 is_local: bool = not is_colab
 
 
-# --------------------------------------------------------------------------- #
-# Поиск корня репозитория
-# --------------------------------------------------------------------------- #
-
 def _find_repo_root_local() -> Path:
-    """Ищет корень репозитория, поднимаясь от текущего файла до каталога с `.git`."""
     here = Path(__file__).resolve()
     for parent in (here, *here.parents):
         if (parent / ".git").exists():
             return parent
-    # Фолбэк: каталог рядом с этим файлом.
     return here.parent
 
 
 def _get_repo_name() -> str:
-    """Пытается определить имя репозитория из git remote; иначе берёт имя папки."""
     root = _find_repo_root_local()
     try:
         url = subprocess.check_output(
@@ -74,7 +45,6 @@ def _get_repo_name() -> str:
             text=True,
         ).strip()
         if url:
-            # Поддерживаем и SSH (git@github.com:user/repo.git), и HTTPS.
             name = url.rstrip("/").split("/")[-1]
             if name.endswith(".git"):
                 name = name[:-4]
@@ -92,19 +62,10 @@ else:
     REPO_ROOT = _find_repo_root_local()
 
 
-# --------------------------------------------------------------------------- #
-# Google Drive
-# --------------------------------------------------------------------------- #
-
 DRIVE_ROOT: Optional[Path] = Path("/content/drive/MyDrive") if is_colab else None
 
 
-# --------------------------------------------------------------------------- #
-# Устройство (CUDA / MPS / CPU)
-# --------------------------------------------------------------------------- #
-
 def _resolve_device():
-    """Возвращает torch.device под текущее окружение."""
     if not _TORCH_AVAILABLE:
         return None
     if is_colab and torch.cuda.is_available():
@@ -118,30 +79,11 @@ def _resolve_device():
 DEVICE = _resolve_device()
 
 
-# --------------------------------------------------------------------------- #
-# Публичные функции
-# --------------------------------------------------------------------------- #
-
 def get_project_dir(project_name: str) -> Path:
-    """Возвращает путь к подпроекту внутри репозитория.
-
-    Args:
-        project_name: имя подкаталога (например, ``"lab1-CLAS"``).
-
-    Returns:
-        Абсолютный ``Path`` к каталогу проекта.
-    """
     return REPO_ROOT / project_name
 
 
 def get_save_dir(project_name: str) -> Path:
-    """Возвращает каталог для артефактов обучения (чекпоинты, логи, графики).
-
-    • В Colab — внутри Google Drive, чтобы пережить сброс сессии.
-    • Локально — внутри подпроекта в репозитории.
-
-    Каталог создаётся автоматически, если его ещё нет.
-    """
     if is_colab:
         if DRIVE_ROOT is None:
             raise RuntimeError(
@@ -157,11 +99,6 @@ def get_save_dir(project_name: str) -> Path:
 
 
 def get_device():
-    """Возвращает ``torch.device`` и печатает краткую информацию.
-
-    Returns:
-        ``torch.device`` или ``None``, если torch недоступен.
-    """
     if not _TORCH_AVAILABLE:
         print("⚠️  torch не установлен — device недоступен")
         return None
@@ -182,7 +119,6 @@ def get_device():
 
 
 def print_env() -> None:
-    """Печатает сводку окружения: платформу, device, ключевые пути и версии."""
     env_label = "Google Colab" if is_colab else "Local (macOS)"
     print("=" * 60)
     print(f"🌐 Environment: {env_label}")

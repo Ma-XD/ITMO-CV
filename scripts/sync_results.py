@@ -1,32 +1,15 @@
-"""
-Утилита для скачивания результатов обучения с Google Drive на локальную машину.
-
-Запускается **локально**. Полностью автоматическое скачивание требует
-публичной ссылки на папку outputs и установленной библиотеки ``gdown``.
-
-Использование:
-    python scripts/sync_results.py                       # показать инструкцию
-    python scripts/sync_results.py --folder-id <ID>      # скачать через gdown
-    python scripts/sync_results.py --project lab1-CLAS   # показать локальный путь
-"""
-
 from __future__ import annotations
 
 import argparse
 import sys
 from pathlib import Path
 
-# Чтобы можно было запускать как `python scripts/sync_results.py` из корня репо.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from env_config import REPO_ROOT, is_colab  # noqa: E402
 
 
 def _download_with_gdown(folder_id: str, dest: Path) -> int:
-    """Скачивает папку Google Drive через gdown.
-
-    Возвращает код выхода: 0 при успехе.
-    """
     try:
         import gdown  # type: ignore
     except ImportError:
@@ -46,7 +29,6 @@ def _download_with_gdown(folder_id: str, dest: Path) -> int:
 
 
 def _print_instructions(project: str | None) -> None:
-    """Печатает ручные инструкции по выгрузке результатов."""
     print("ℹ️  Как забрать результаты обучения:")
     print()
     print("  1. Открой Google Drive (тот же аккаунт, который был в Colab).")
