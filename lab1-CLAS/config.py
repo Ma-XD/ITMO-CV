@@ -3,15 +3,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+_LAB_DIR = Path(__file__).resolve().parent
+if str(_LAB_DIR) not in sys.path:
+    sys.path.insert(0, str(_LAB_DIR))
 
-from env_config import get_save_dir, is_colab  # noqa: E402
+from env_config import LAB_DIR, get_save_dir, is_colab  # noqa: E402
 
 
-PROJECT_NAME: str = "lab1-CLAS"
-PROJECT_DIR: Path = _REPO_ROOT / PROJECT_NAME
+PROJECT_DIR: Path = LAB_DIR
 
 # В Colab данные распаковываются в /content/data/dvm (быстрый локальный SSD VM),
 # чтобы DataLoader не читал тысячи мелких jpg напрямую с Drive.
@@ -23,7 +22,7 @@ else:
 CONFIRMED_FRONTS_DIR: Path = DATA_DIR / "confirmed_fronts"
 INDEX_PATH: Path = DATA_DIR / "index.csv"
 
-SAVE_DIR: Path = get_save_dir(PROJECT_NAME)
+SAVE_DIR: Path = get_save_dir()
 CHECKPOINT_DIR: Path = SAVE_DIR / "checkpoints"
 LOG_DIR: Path = SAVE_DIR / "logs"
 FIGURE_DIR: Path = SAVE_DIR / "figures"
