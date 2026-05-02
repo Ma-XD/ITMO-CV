@@ -90,7 +90,7 @@ def get_save_dir(project_name: str) -> Path:
                 "❌ Google Drive не смонтирован: "
                 "вызови drive.mount('/content/drive') или запусти colab_setup.py"
             )
-        save_dir = DRIVE_ROOT / project_name / "outputs"
+        save_dir = DRIVE_ROOT / REPO_NAME / project_name / "outputs"
     else:
         save_dir = REPO_ROOT / project_name / "outputs"
 
