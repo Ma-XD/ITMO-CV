@@ -47,16 +47,6 @@ NUM_WORKERS: int = 2
 VAL_FRACTION: float = 0.15
 TEST_FRACTION: float = 0.15
 
-EPOCHS_SCRATCH: int = 25
-EPOCHS_FINETUNE: int = 12
-
-LR_SCRATCH: float = 1e-3
-# Fine-tune: разделяем LR. Head — новый Linear, обучается с нуля → выше LR.
-# Backbone — предобучен на ImageNet, не хочется ломать фичи → ниже LR.
-LR_FINETUNE_HEAD: float = 1e-3
-LR_FINETUNE_BACKBONE: float = 1e-4
-WEIGHT_DECAY: float = 1e-4
-
 MODEL_CUSTOM: str = "custom_resnet18"
 MODEL_RESNET18: str = "resnet18"
 MODEL_MOBILENETV3: str = "mobilenetv3_small"

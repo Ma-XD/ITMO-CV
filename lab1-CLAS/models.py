@@ -13,14 +13,11 @@ from torchvision.models import (
 
 from config import (
     ALL_MODELS,
-    LR_FINETUNE_BACKBONE,
-    LR_FINETUNE_HEAD,
     MODEL_CUSTOM,
     MODEL_MOBILENETV3,
     MODEL_RESNET18,
     NUM_CLASSES,
     PRETRAINED_MODELS,
-    WEIGHT_DECAY,
 )
 
 
@@ -165,18 +162,22 @@ def _head_parameters(model: nn.Module, name: str) -> Iterable[nn.Parameter]:
 def get_param_groups(
     model: nn.Module,
     name: str,
-    lr_head: float = LR_FINETUNE_HEAD,
-    lr_backbone: float = LR_FINETUNE_BACKBONE,
-    weight_decay: float = WEIGHT_DECAY,
+    *,
+    lr_head: float,
+    weight_decay: float,
+    lr_backbone: float | None = None,
 ) -> list[dict]:
     """Param groups для optimizer (разные LR для разных частей).
 
     Pretrained: 2 группы — head (новый, с нуля) с большим LR, backbone
-    (ImageNet) с меньшим, чтобы не разрушить фичи.
-    Custom: 1 группа со всеми параметрами.
+    (ImageNet) с меньшим, чтобы не разрушить фичи. lr_backbone обязателен.
+    Custom: 1 группа со всеми параметрами; lr_backbone не используется.
     """
     if name not in PRETRAINED_MODELS:
         return [{"params": list(model.parameters()), "lr": lr_head, "weight_decay": weight_decay}]
+
+    if lr_backbone is None:
+        raise ValueError(f"lr_backbone обязателен для pretrained модели {name!r}")
 
     head_params = list(_head_parameters(model, name))
     head_ids = {id(p) for p in head_params}
