@@ -15,31 +15,35 @@
 
 ```
 .
-├── env_config.py                 — автодетект Colab/Local, device, пути
-├── colab_setup.py                — настройка среды в Colab (GPU, Drive, pip, импорт-тест)
-├── requirements.txt              — общие зависимости (torch, sklearn, …)
-├── notebooks/
-│   └── colab_template.ipynb      — шаблон ноутбука для Colab
-├── scripts/
-│   └── sync_results.py           — локальная утилита для выгрузки результатов с Drive
+├── infra/                        — dev-tooling, НЕ уходит в сдачу
+│   ├── colab_template.ipynb      — шаблон ноутбука для новой лабы
+│   └── sync_results.py           — выгрузка результатов с Drive локально
 ├── examples/                     — материалы с практик (не трогать)
-├── lab<N>-<NAME>/                — лабораторные (сейчас есть lab1-CLAS)
-│   ├── task.md                   — задание
-│   ├── config.py                 — пути для сохранений (обязателен, см. ниже)
-│   └── train.py                  — точка входа обучения
+├── lab<N>-<NAME>/                — самодостаточная лаба (артефакт сдачи)
+│   ├── lab<N>.ipynb              — ноутбук, плоско в корне лабы
+│   ├── env_config.py             — копия (Colab/local detect, device, save_dir)
+│   ├── config.py                 — пути и dataset/model spec лабы
+│   ├── data.py / models.py / engine.py — код лабы
+│   ├── build_index.py            — препроцессинг датасета (если нужен)
+│   ├── requirements.txt          — зависимости лабы
+│   ├── task.md                   — задание (не редактируй без просьбы)
+│   └── outputs/                  — checkpoints/, logs/, figures/ (gitignored)
 └── .cursor/rules/                — правила для агента
 ```
 
+**Каждая лаба самодостаточна.** Все её зависимости (`env_config.py`, `requirements.txt`, скрипты) лежат внутри `lab<N>-<NAME>/`. Это позволяет zip-нуть папку и сдать проверяющему без доступа к GitHub.
+
 ## Лабораторные
 
-- Каждая лаба — отдельная папка `lab<N>-<NAME>/`.
+- Каждая лаба — отдельная папка `lab<N>-<NAME>/` с **плоской** структурой (ноутбук и скрипты лежат в корне лабы, без подпапок `notebooks/`/`scripts/`).
 - `task.md` — условие задания (не редактируй без просьбы).
+- `env_config.py` живёт внутри лабы. Экспортирует: `is_colab`, `LAB_DIR`, `PROJECT_NAME`, `DEVICE`, `get_device()`, `get_save_dir()`, `print_env()`.
 - `config.py` в каждой лабе:
-  - импортирует `env_config` из корня;
-  - определяет пути через `env_config.get_save_dir(<project_name>)`:
-    - `SAVE_DIR`, `CHECKPOINT_DIR` (для `.pth`), `LOG_DIR` (для `.json`), `FIGURE_DIR` (для `.png`).
-- `train.py` **запускается из корня репо**: `python lab1-CLAS/train.py`.
+  - sys.path.insert свой `LAB_DIR` (только `parent`, не `parent.parent`);
+  - импортирует `from env_config import LAB_DIR, get_save_dir, is_colab`;
+  - определяет пути сохранений: `SAVE_DIR = get_save_dir()`, далее `CHECKPOINT_DIR`, `LOG_DIR`, `FIGURE_DIR`.
 - Результаты сохраняй **только через пути из `config.py`**, не хардкодь.
+- **Тренировочные гипер-параметры** (`EPOCHS`, `LR`, `WEIGHT_DECAY`) inline в train-ячейках ноутбука — **не в config.py**. Это даёт видимость на видео-демо.
 
 Пример чекпоинта:
 
@@ -77,16 +81,24 @@ torch.save({
 
 - Python — всегда из **проектного venv**: `.venv/bin/python` (или активированный `source .venv/bin/activate`).
 - Homebrew-Python заблокирован PEP 668; глобально `pip install` не ставить.
-- Установка зависимостей: `./.venv/bin/pip install -r requirements.txt`.
+- Установка зависимостей: `./.venv/bin/pip install -r lab<N>-<NAME>/requirements.txt` (deps лежат внутри лабы).
 - Предпочтительный интерпретатор в Cursor — `.venv/bin/python` (Command Palette → *Python: Select Interpreter*).
 
 ## Запуск в Colab
 
-- Открой `notebooks/colab_template.ipynb` (или копию), порядок ячеек:
-  1. Clone / Pull (нужен Colab-secret `GITHUB_TOKEN`).
-  2. `drive.mount('/content/drive')` — **в ячейке ноутбука**, а не из `!python`.
-  3. `!python colab_setup.py` — проверки GPU/Drive, установка пакетов.
-  4. `from env_config import print_env; print_env()`.
+Два сценария:
+
+**A) Dev (свой workflow с GitHub):**
+1. Один раз клонируй репо: `!git clone https://<TOKEN>@github.com/Ma-XD/ITMO-CV.git /content/ITMO-CV`.
+2. Открой ноутбук лабы (например `lab1-CLAS/lab1.ipynb`) через Colab UI.
+3. Запускай ячейки по порядку. Первая ячейка ноутбука сама делает `cd lab1-CLAS` и `sys.path` setup.
+
+**B) Сдача (без GitHub):**
+1. Распакуй zip папки `lab<N>-<NAME>/` в `/content/` через Colab Files panel.
+2. Открой `lab<N>.ipynb` из распакованной папки.
+3. Запускай ячейки. Первая ячейка детектит распакованную папку и cd в неё.
+
+В обоих сценариях setup-ячейки в ноутбуке делают: `os.chdir(lab_dir)` → `drive.mount` (если нужен Drive) → `pip install -r requirements.txt` → `print_env()`. Никакого внешнего `colab_setup.py` нет.
 
 ## Git / рабочий процесс
 
@@ -102,7 +114,8 @@ torch.save({
 
 ## Что обсудить с пользователем, прежде чем делать
 
-- Крупные рефакторинги общей инфраструктуры (`env_config.py`, `colab_setup.py`, шаблон ноутбука).
+- Крупные рефакторинги структуры лаб (плоская vs вложенная, контракт `env_config.py`).
+- Изменения в `infra/` (затронут все будущие лабы).
 - Добавление тяжёлых зависимостей.
 - Любые изменения в `examples/`.
 - Создание новых лабораторных (структура/название).
@@ -116,11 +129,3 @@ torch.save({
 - **Не дублируй** код словами (`# импортируем`, `# создаём датасет`).
 - **Не раздувай** docstring у очевидных функций; если имя и типы всё объясняют — docstring не нужен.
 - **Можно**: короткий docstring у публичного API при неочевидном поведении; inline-комментарий про нетривиальный выбор или ограничение; `argparse` help — это часть интерфейса.
-
-Подробнее и с примерами: `.cursor/rules/code-comments.mdc`.
-
-## Связанные документы
-
-- `.cursor/rules/git-ask-before-commit.mdc` — правило про согласование коммитов.
-- `.cursor/rules/repo-guide.mdc` — краткий указатель на этот файл.
-- `.cursor/rules/code-comments.mdc` — стиль комментариев в коде.
