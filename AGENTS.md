@@ -94,6 +94,12 @@ torch.save({
 - `data/`, `outputs/`, `checkpoints/`, `.venv/`, `.cursor/`, `*.pth`, `*.pt`, `*.onnx`, `.DS_Store` — **не коммитятся** (см. `.gitignore`).
 - Для пуша: `git push` (upstream `origin/main` уже настроен).
 
+### Сообщения коммитов
+
+- **Язык — английский.** Conventional Commits prefix (`feat`/`fix`/`docs`/`refactor`/`chore`) + scope, например `feat(lab1)`, `fix(env_config)`.
+- **Одно предложение**, отвечающее на вопрос **«зачем этот коммит»** (мотивация, не пересказ диффа). Без тела, без блока с co-author. Пример: `fix(lab1): keep notebook cells runnable standalone so the video demo can replay any cell`.
+- **Маленькие коммиты.** Один логически цельный тематический шаг = один коммит. Не лепи `engine.py` + правки `data.py` + изменения в AGENTS.md в один коммит — разнеси.
+
 ## Что обсудить с пользователем, прежде чем делать
 
 - Крупные рефакторинги общей инфраструктуры (`env_config.py`, `colab_setup.py`, шаблон ноутбука).
