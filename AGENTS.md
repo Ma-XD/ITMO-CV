@@ -15,10 +15,8 @@
 
 ```
 .
-├── infra/                        — dev-tooling, НЕ уходит в сдачу
-│   └── colab_template.ipynb      — шаблон ноутбука для новой лабы
 ├── examples/                     — материалы с практик (не трогать)
-├── lab<N>-<NAME>/                — самодостаточная лаба (артефакт сдачи)
+├── lab<N>-<NAME>/                — самодостаточная лаба
 │   ├── lab<N>.ipynb              — ноутбук, плоско в корне лабы
 │   ├── env_config.py             — копия (Colab/local detect, device, save_dir)
 │   ├── config.py                 — пути и dataset/model spec лабы
@@ -30,7 +28,7 @@
 └── .cursor/rules/                — правила для агента
 ```
 
-**Каждая лаба самодостаточна.** Все её зависимости (`env_config.py`, `requirements.txt`, скрипты) лежат внутри `lab<N>-<NAME>/`. Это позволяет zip-нуть папку и сдать проверяющему без доступа к GitHub.
+**Каждая лаба самодостаточна.** Все её зависимости (`env_config.py`, `requirements.txt`, скрипты) лежат внутри `lab<N>-<NAME>/`.
 
 ## Лабораторные
 
@@ -42,7 +40,7 @@
   - импортирует `from env_config import LAB_DIR, get_save_dir, is_colab`;
   - определяет пути сохранений: `SAVE_DIR = get_save_dir()`, далее `CHECKPOINT_DIR`, `LOG_DIR`, `FIGURE_DIR`.
 - Результаты сохраняй **только через пути из `config.py`**, не хардкодь.
-- **Тренировочные гипер-параметры** (`EPOCHS`, `LR`, `WEIGHT_DECAY`) inline в train-ячейках ноутбука — **не в config.py**. Это даёт видимость на видео-демо.
+- **Тренировочные гипер-параметры** (`EPOCHS`, `LR`, `WEIGHT_DECAY`) inline в train-ячейках ноутбука — **не в config.py**.
 
 Пример чекпоинта:
 
@@ -54,20 +52,6 @@ torch.save({
     'f1_macro': f1,
 }, CHECKPOINT_DIR / f"{model_name}_best.pth")
 ```
-
-## Сдача лабораторных: видео-демо
-
-Каждая лаба сдаётся **видео-разбором с объяснением кода**, отправляемым через форму. Код проектируй с учётом этого:
-
-1. **Структура «сверху вниз»** — ноутбук разбит на нумерованные разделы с markdown-заголовками и короткими пояснениями. Куски по 200 строк без комментариев непригодны для рассказа на запись.
-2. **Train ≠ Inference** — длительные `fit(...)` ячейки на видео *не запускаются*, только показываются и объясняются. Поэтому inference и smoke-test должны работать **независимо** от train-ячейки (грузить state_dict из `CHECKPOINT_DIR`).
-3. **Видимый запуск нейросетей** — на видео должны выполняться (а не только обсуждаться):
-   - smoke-test модели (forward pass на dummy-батче, проверка shape выхода),
-   - инференс с чекпоинта на нескольких тестовых картинках с визуализацией (GT vs prediction),
-   - метрики на test + confusion matrix.
-4. **Чекпоинты под рукой** — сохраняй обученные веса так, чтобы inference-ячейка восстановила модель без перезапуска `fit(...)`.
-
-Не прячь весь NN-функционал внутри `fit()` — выноси smoke-test и inference в отдельные ячейки.
 
 ## Примеры с практик
 
@@ -85,19 +69,9 @@ torch.save({
 
 ## Запуск в Colab
 
-Два сценария:
-
-**A) Dev (свой workflow с GitHub):**
-1. Один раз клонируй репо: `!git clone https://<TOKEN>@github.com/Ma-XD/ITMO-CV.git /content/ITMO-CV`.
-2. Открой ноутбук лабы (например `lab1-CLAS/lab1.ipynb`) через Colab UI.
-3. Запускай ячейки по порядку. Первая ячейка ноутбука сама делает `cd lab1-CLAS` и `sys.path` setup.
-
-**B) Сдача (без GitHub):**
-1. Распакуй zip папки `lab<N>-<NAME>/` в `/content/` через Colab Files panel.
-2. Открой `lab<N>.ipynb` из распакованной папки.
-3. Запускай ячейки. Первая ячейка детектит распакованную папку и cd в неё.
-
-В обоих сценариях setup-ячейки в ноутбуке делают: `os.chdir(lab_dir)` → `drive.mount` (если нужен Drive) → `pip install -r requirements.txt` → `print_env()`. Никакого внешнего `colab_setup.py` нет.
+1. Открой `lab<N>.ipynb` с GitHub: `https://colab.research.google.com/github/Ma-XD/ITMO-CV/blob/main/lab<N>-<NAME>/lab<N>.ipynb` (или File → Open notebook → GitHub).
+2. Запусти **§1 Dev — git pull/clone** — ячейка возьмёт `GITHUB_TOKEN` из Colab Secrets и склонирует/обновит репо в `/content/ITMO-CV/`. Без токена ячейка молча скипнется.
+3. Дальше §2+ ноутбук сам делает path setup → drive.mount → `pip install -r requirements.txt` → `print_env()`. Никакого внешнего `colab_setup.py` нет.
 
 ## Git / рабочий процесс
 
