@@ -83,7 +83,8 @@ def get_device():
 
 
 def print_env() -> None:
-    env_label = "Google Colab" if is_colab else "Local (macOS)"
+    import platform
+    env_label = "Google Colab" if is_colab else f"Local ({platform.system()})"
     print("=" * 60)
     print(f"🌐 Environment: {env_label}")
     print(f"📦 Project:     {PROJECT_NAME}")
