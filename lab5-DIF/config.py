@@ -17,7 +17,13 @@ else:
     DATA_DIR = PROJECT_DIR / "data"
 
 # Директории для датасета DreamBooth
-INSTANCE_DIR: Path = DATA_DIR / "instance_images"
+if is_colab:
+    # В Colab берем фото с Google Диска
+    INSTANCE_DIR: Path = DRIVE_ROOT / "ITMO-CV" / PROJECT_NAME / "data" / "instance_images"
+else:
+    # Локально берем из папки проекта
+    INSTANCE_DIR: Path = DATA_DIR / "instance_images"
+
 CLASS_DIR: Path = DATA_DIR / "class_images"
 
 SAVE_DIR: Path = get_save_dir()
