@@ -37,10 +37,9 @@ DRIVE_ROOT: Optional[Path] = Path("/content/drive/MyDrive") if is_colab else Non
 def _resolve_device():
     if not _TORCH_AVAILABLE:
         return None
-    if is_colab and torch.cuda.is_available():
+    if torch.cuda.is_available():
         return torch.device("cuda")
-    if is_local and getattr(torch.backends, "mps", None) is not None \
-            and torch.backends.mps.is_available():
+    if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
 
