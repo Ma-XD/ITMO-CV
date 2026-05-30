@@ -7,7 +7,7 @@ _LAB_DIR = Path(__file__).resolve().parent
 if str(_LAB_DIR) not in sys.path:
     sys.path.insert(0, str(_LAB_DIR))
 
-from env_config import LAB_DIR, get_save_dir, is_colab  # noqa: E402
+from env_config import LAB_DIR, get_save_dir, is_colab, DRIVE_ROOT, PROJECT_NAME  # noqa: E402
 
 PROJECT_DIR: Path = LAB_DIR
 
